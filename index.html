@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RAP</title>
+  <link rel="icon" href="./figs/logo.png" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="toc">
+    <h3>Content</h3>
+    <hr>
+    <ul>
+      <li><a href="#achievements">Achievements</a></li>
+      <li><a href="#abstract">Abstract</a></li>
+      <li><a href="#introduction">Introduction</a></li>
+      <li><a href="#method">Method</a></li>
+      <li class="toc-subsection"><a href="#recoverySection">Recovery-oriented Perturbation</a></li>
+      <li class="toc-subsection"><a href="#crossAgentSection">Cross-agent View Synthesis</a></li>
+      <li class="toc-subsection"><a href="#r2r-alignment">Raster-to-Real Alignment</a></li>
+      <li><a href="#acknowledgements">Acknowledgements</a></li>
+    </ul>
+  </div>
+
+  <div class="main-content">
+    <div class="hero-text">RAP</div>
+    <div class="sub-hero-text">3D Rasterization Augmented End-to-End Planning</div>
+
+  <!-- Add Authors -->
+  <div class="authors">
+    <a href="https://lan-feng.com/" target="_blank">Lan Feng<sup>1,†</sup></a>, 
+    <a href="https://yang-gao.ai/" target="_blank">Yang Gao<sup>1,†</sup></a>, 
+    <a href="https://eloizablocki.github.io/" target="_blank">Éloi Zablocki<sup>2,‡</sup></a>, 
+    <a href="https://quanyili.github.io/" target="_blank">Quanyi Li</a>, 
+    <a href="https://wuyangli.ai/" target="_blank">Wuyang Li<sup>1,†</sup></a>, 
+    <a href="https://sichaoliu.github.io/" target="_blank">Sichao Liu<sup>1,†</sup></a>, 
+    <a href="https://cord.inria.fr/" target="_blank">Matthieu Cord<sup>2,3,‡</sup></a>, 
+    <a href="https://people.epfl.ch/alexandre.alahi" target="_blank">Alexandre Alahi<sup>1,†</sup></a>
+    <br><br>
+    <span class="affiliation">
+      <sup>1</sup>EPFL, Switzerland &nbsp;&nbsp;
+      <sup>2</sup>Valeo.ai, France &nbsp;&nbsp;
+      <sup>3</sup>Sorbonne Université, France
+    </span>
+    <!-- <br>
+    <span class="emails">
+      <sup>†</sup>firstname.lastname@epfl.ch &nbsp;&nbsp;
+      <sup>‡</sup>firstname.lastname@valeo.com
+    </span> -->
+  </div>
+    <!-- End Authors -->
+
+    <!-- use the video ./figs/videomimic_teaser.mp4 -->
+    <video id="teaser-video" src="./figs/rap_fixed.mp4" width="100%" height="100%" controls muted playsinline autoplay></video>
+    <!-- Caption for Figure 1 (Teaser Video) -->
+    <p class="figure-caption">
+        This 20-second driving clip from nuPlan is rendered with 3D rasterization using left, front, and right cameras, which preserves semantic and metric accuracy while discarding photorealism to ensure rendering speed and direct usability for end-to-end training.
+    </p>
+
+    <!-- Add Quick Links Here -->
+    <div class="quick-links">
+      <!-- <a href="https://arxiv.org/abs/2505.03729" target="_blank">[arxiv]</a> -->
+      <a href="https://github.com/vita-epfl/RAP">[code]</a> 
+      <!-- <a href="#gallery-section-anchor">[gallery]</a> -->
+    </div>
+    <div class="tagline" id="achievements">Achievements.</div>  
+    <div class="section">
+      <ul>
+        <li>
+          🏆 <strong>1st Place</strong> in the 
+          <a href="https://waymo.com/open/challenges/" target="_blank">
+            Waymo Open Dataset Vision-based End-to-End Driving Challenge (2025)
+          </a> with <em>UniPlan entry</em>.
+        </li>
+        <li>
+          🏆 <strong>Current Leaderboard #1</strong> on the 
+          <a href="https://waymo.com/open/challenges/2025/e2e-driving/" target="_blank">
+            Waymo Open Dataset Vision-based End-to-End Driving Leaderboard
+          </a> with <em>RAP entry</em>.
+        </li>
+        <li>
+          🏆 <strong>State-of-the-art</strong> on 
+          <a href="https://huggingface.co/spaces/AGC2024-P/e2e-driving-navtest" target="_blank">NAVSIM v1</a>, 
+          <a href="https://huggingface.co/spaces/AGC2025/e2e-driving-navhard" target="_blank">NAVSIM v2</a>, 
+          and 
+          <a href="https://thinklab-sjtu.github.io/Bench2Drive/" target="_blank">Bench2Drive</a>.
+        </li>
+      </ul>
+    </div>
+    <div class="tagline" id="abstract">Abstract.</div>
+
+    <div class="section">
+      <p>
+        End-to-end (E2E) driving policies trained via imitation learning rely only on expert demonstrations. 
+        Once deployed in closed loop, these policies lack recovery data: small mistakes cannot be corrected and quickly escalate into failures. 
+        A promising direction is to augment training with alternative viewpoints and trajectories beyond the logged path. 
+        While prior works use photorealistic digital twins built with neural rendering or game engines, these methods are prohibitively slow and costly, 
+        and thus mainly serve evaluation purposes.
+      </p>
+      <p>
+        In this work, we argue that photorealism is unnecessary for training E2E planners. 
+        What truly matters is semantic fidelity and scalability: driving depends on geometry and dynamics, not textures or lighting. 
+        Motivated by this, we introduce <em>3D Rasterization</em>, which replaces expensive rendering with lightweight rasterization of annotated primitives, 
+        enabling counterfactual recovery maneuvers and cross-agent view synthesis. 
+        To ensure these synthetic views transfer effectively to real-world deployment, 
+        we further propose a <em>Raster-to-Real</em> feature-space alignment that bridges the sim-to-real gap without requiring pixel-level realism.
+      </p>
+      <p>
+        Together, these components form <span style="font-variant: small-caps;">Rasterization Augmented Planning (RAP)</span>, 
+        a scalable data augmentation pipeline for end-to-end driving. 
+        RAP achieves state-of-the-art closed-loop robustness and long-tail generalization, 
+        ranking <strong>1st on four major benchmarks</strong>: NAVSIM v1/v2, Waymo Open Dataset Vision-based E2E Driving, and Bench2Drive. 
+        Our results show that lightweight rasterization with feature alignment suffices to scale E2E training, 
+        offering a practical and scalable alternative to photorealistic rendering.
+      </p>
+    </div>
+
+    <div class="tagline" id="introduction">Introduction.</div>
+
+    <div class="section">
+      <!-- Pull Figure -->
+      <div class="figure">
+        <img src="./figs/pull.png" alt="Comparison of rendering paradigms for end-to-end driving" style="width:100%; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+        <p class="figure-caption">
+          <strong>Comparison of rendering paradigms for end-to-end driving.</strong> 
+          <strong>Neural or engine-based methods</strong> (<strong>left</strong>) aim to minimize the sim-to-real gap in 
+          <em>pixel space</em>, but incur high computational cost. 
+          In contrast, <strong>our approach</strong> (<strong>right</strong>) leverages <em>3D rasterization</em>, which is scalable and fully controllable, 
+          and aligns rasterized inputs with real images in <em>feature space</em>.
+        </p>
+      </div>
+    
+      <!-- Intro Text -->
+      <p>
+        Recent efforts in end-to-end driving often rely on photorealistic digital twins built with neural rendering or game engines, 
+        which focus on pixel-level realism but remain computationally heavy and limited in scalability. 
+        In this work, we show that photorealism is not necessary for training robust planners. 
+        Instead, our <span style="font-variant: small-caps;">Rasterization Augmented Planning (RAP)</span> leverages lightweight 3D rasterization 
+        to generate semantically faithful augmentations, and bridges the sim-to-real gap via feature-space alignment. 
+        This design enables scalable data synthesis and significantly improves robustness and generalization in closed-loop driving.
+      </p>
+    </div>
+
+    <div class="tagline" id="method">Method.</div>
+
+    <div class="section">
+    
+      <!-- Method Figure -->
+      <div class="figure">
+        <img src="./figs/method.png" alt="Overview of RAP method" style="width:100%; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+        <p class="figure-caption">
+          <strong>Overview of the proposed RAP.</strong> 
+          (a) <strong>Data Augmentations via 3D Rasterization</strong>: annotated driving logs are converted into large-scale synthetic samples through 
+          <em>cross-agent view synthesis</em> and <em>recovery-oriented perturbation</em>. 
+          (b) <strong>Raster-to-Real Alignment</strong>: paired real and rasterized inputs are processed by a frozen image encoder and a learnable feature projector. 
+          Spatial alignment minimizes MSE loss against detached raster features, while global alignment uses a gradient reversal layer and domain classifier to enforce domain confusion.
+        </p>
+      </div>
+    
+      <!-- Short Method Text -->
+      <p>
+        <span style="font-variant: small-caps;">RAP</span> consists of two key components. 
+        First, <em>3D rasterization</em> transforms annotated logs into diverse, large-scale augmentations by generating novel viewpoints and recovery maneuvers. 
+        Second, <em>Raster-to-Real alignment</em> ensures these synthetic samples transfer effectively to real-world deployment by aligning rasterized and real inputs in feature space. 
+        Together, these components provide a scalable and robust data pipeline for closed-loop end-to-end driving.
+      </p>
+    </div>
+    <div class="section", id="recoverySection">
+      <h2>Recovery-oriented Perturbation</h2>
+      
+      <!-- One-sentence intro -->
+      <p>
+        We perturb logged expert trajectories with lateral/longitudinal offsets and noise, then re-render them with 3D rasterization, generating counterfactual scenes that teach the planner to recover from distribution shifts.
+      </p>
+    
+      <!-- Before vs After videos -->
+      <div style="display: flex; flex-direction: column; gap: 1.5em; margin-top: 1em;">
+    
+        <!-- Before -->
+        <div style="text-align: center;">
+          <video src="./videos/fixed_0.mp4" width="100%" muted autoplay loop playsinline controls></video>
+          <p class="figure-caption"><strong>Before perturbation:</strong> Ego follows the expert trajectory.</p>
+        </div>
+    
+        <!-- After -->
+        <div style="text-align: center;">
+          <video src="./videos/fixed_1.mp4" width="100%" muted autoplay loop playsinline controls></video>
+          <p class="figure-caption"><strong>After perturbation:</strong> Counterfactual ego trajectories drift from the expert path, creating recovery scenarios.</p>
+        </div>
+    
+      </div>
+    </div>
+
+  <!-- Video Gallery Section - CROSS-AGENT VIDEOS -->
+  <div class="section", id="crossAgentSection">
+  <h2>Cross-agent View Synthesis</h2>
+  <!-- One-sentence intro -->
+  <p>
+    Instead of rendering only from the ego trajectory, we substitute the ego with other agents in the same scenario while keeping the original camera parameters fixed, 
+    producing views from diverse perspectives without extra sensors. 
+    Combined with recovery-oriented perturbations, this scales the dataset to over <strong>500k rasterized training samples</strong>, 
+    covering diverse viewpoints, richer interactions, and rare recovery scenarios.
+  </p>
+  <div class="video-gallery-section" id="crossAgentGallerySection">
+    <div class="video-gallery-container">
+      <div class="video-gallery" id="videoGalleryCrossAgent">
+        <!-- Cross-agent videos -->
+        <video class="gallery-video" src="./videos/syn_1_299_fixed.mp4" autoplay muted playsinline loop></video>
+        <video class="gallery-video" src="./videos/syn_1_99_fixed.mp4" autoplay muted playsinline loop></video>
+        <video class="gallery-video" src="./videos/syn_2_99_fixed.mp4" autoplay muted playsinline loop></video>
+        <video class="gallery-video" src="./videos/syn_2_399_fixed.mp4" autoplay muted playsinline loop></video>
+        <video class="gallery-video" src="./videos/syn_2_699_fixed.mp4" autoplay muted playsinline loop></video>
+        <!-- Add more videos if available -->
+      </div>
+    </div>
+
+    <!-- Container for the caption AND buttons -->
+    <div class="gallery-caption-container">
+        <!-- Navigation buttons -->
+        <div class="gallery-nav-controls">
+            <button class="gallery-nav left" id="scrollLeftBtnCrossAgent">&lt;</button>
+            <button class="gallery-nav right" id="scrollRightBtnCrossAgent">&gt;</button>
+        </div>
+        <!-- Caption text -->
+        <p class="figure-caption gallery-caption">
+            <b>Cross-agent view synthesis:</b> nuPlan scenarios rendered from multiple agents’ perspectives, 
+            expanding training data beyond the ego view without additional sensors.
+        </p>
+    </div>
+  </div>
+
+  <div class="section" id="r2r-alignment">
+    <h2>Raster-to-Real Alignment</h2>
+  
+    <div class="figure" style="text-align:center;">
+      <img src="./figs/pca.png" alt="PCA visualization of frozen DINOv3 features" style="width:108%; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+      <p class="figure-caption" style="max-width:70%; margin: 10px auto;">
+        <strong>PCA visualization of frozen DINOv3 features.</strong> 
+        Rasterized and real inputs share similar structures, supporting rasterization as a perceptually valid substitute for real imagery.
+      </p>
+    </div>
+  
+    <p>
+      To bridge the gap between synthetic rasters and real images, we introduce <b>Raster-to-Real (R2R) alignment</b>, which enforces feature consistency at both spatial and global levels. Spatial alignment minimizes token-wise differences between paired real and raster features, while global alignment employs adversarial training to make overall feature distributions indistinguishable. Together, these objectives ensure that rasterized augmentations transfer effectively to real-world deployment.
+    </p>
+  </div>
+<!-- End Video Gallery Section -->
+
+
+    <!-- <div class="bibtex-code" id="bibtex">
+      <div class="bibtex-title">BibTeX</div>
+      <pre><code>@article{videomimic,
+          title     = {Visual imitation enables contextual humanoid control},
+          author    = {Allshire, Arthur and Choi, Hongsuk and Zhang, Junyi and McAllister, David 
+                       and Zhang, Anthony and Kim, Chung Min and Darrell, Trevor and Abbeel, 
+                       Pieter and Malik, Jitendra and Kanazawa, Angjoo},
+          journal   = {arXiv preprint arXiv:2505.03729},
+          year      = {2025}
+        }</code></pre>
+    </div> -->
+
+  </div> <!-- End of main-content div -->
+
+
+  <div class="footer">
+     Webpage designed by the <span style="font-variant: small-caps;">RAP</span> team, inspired by the <a href="https://github.com/videomimic-1/videomimic-1.github.io" target="_blank">VideoMimic website</a>.
+  </div>
+
+  <!-- Teaser Video Autoplay with Delay and Loop -->
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const video = document.getElementById('teaser-video');
+    // const initialDelay = 1000; // No longer needed, autoplay attribute handles initial play
+    const loopDelay = 3000;    // 3 seconds delay before looping
+
+    // let initialPlayTimeout; // No longer needed
+    let loopTimeout;
+
+    if (video) {
+      // Ensure video is muted (already in HTML, but good practice)
+      video.muted = true;
+      // Controls are already in HTML, ensuring user can play if autoplay fails
+
+      // REMOVE JavaScript-based initial play:
+      /*
+      initialPlayTimeout = setTimeout(function() {
+        video.play().then(function() {
+          // Autoplay started
+        }).catch(function(error) {
+          console.log('Initial autoplay prevented for teaser video. User interaction might be needed.', error);
+          video.controls = true; // Ensure controls are visible
+        });
+      }, initialDelay);
+      */
+
+      // Loop with delay - this part can stay
+      video.addEventListener('ended', function() {
+        clearTimeout(loopTimeout); 
+        loopTimeout = setTimeout(function() {
+          video.currentTime = 0; 
+          video.play().catch(function(error) {
+            console.log('Delayed loop play prevented for teaser video:', error);
+          });
+        }, loopDelay);
+      });
+
+      // --- Clear Timeouts on Manual Pause ---
+      video.addEventListener('pause', function() {
+        if (!video.ended && video.currentTime > 0) {
+           // clearTimeout(initialPlayTimeout); // No longer needed
+           clearTimeout(loopTimeout);
+           console.log('Teaser video: Manual pause detected, clearing loop timeout.');
+        }
+      });
+
+      // --- Clear Timeouts on Manual Play (if paused before initial delay finishes) ---
+       video.addEventListener('play', function() {
+           // if (initialPlayTimeout) { // No longer needed
+           //     clearTimeout(initialPlayTimeout);
+           // }
+       });
+
+    } else {
+      console.error('Video element with ID "teaser-video" not found.');
+    }
+  });
+  </script>
+
+  <!-- JavaScript for Video Gallery Navigation -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const galleries = [
+        {
+          sectionId: 'gallery-section-anchor', // ID of the .video-gallery-section for sitting
+          galleryInnerId: 'videoGallerySitting',
+          scrollLeftBtnId: 'scrollLeftBtnSitting',
+          scrollRightBtnId: 'scrollRightBtnSitting'
+        },
+        {
+          sectionId: 'traversingGallerySection', // ID of the .video-gallery-section for traversing
+          galleryInnerId: 'videoGalleryTraversing',
+          scrollLeftBtnId: 'scrollLeftBtnTraversing',
+          scrollRightBtnId: 'scrollRightBtnTraversing'
+        },
+        {
+          sectionId: 'stairsGallerySection', // ID of the .video-gallery-section for stairs
+          galleryInnerId: 'videoGalleryStairs',
+          scrollLeftBtnId: 'scrollLeftBtnStairs',
+          scrollRightBtnId: 'scrollRightBtnStairs'
+        },
+        {
+          sectionId: 'reconstructionGallerySection', // ID of the .video-gallery-section for reconstruction
+          galleryInnerId: 'videoGalleryReconstruction',
+          scrollLeftBtnId: 'scrollLeftBtnReconstruction',
+          scrollRightBtnId: 'scrollRightBtnReconstruction'
+        },
+        {
+          sectionId: 'crossAgentGallerySection', // ID of the .video-gallery-section for reconstruction
+          galleryInnerId: 'videoGalleryCrossAgent',
+          scrollLeftBtnId: 'scrollLeftBtnCrossAgent',
+          scrollRightBtnId: 'scrollRightBtnCrossAgent'
+        }
+      ];
+
+      galleries.forEach(galleryConfig => {
+        const gallerySection = document.getElementById(galleryConfig.sectionId);
+        if (!gallerySection) {
+          console.error(`Gallery section with ID ${galleryConfig.sectionId} not found.`);
+          return;
+        }
+
+        const galleryContainer = gallerySection.querySelector('.video-gallery-container');
+        const galleryInner = document.getElementById(galleryConfig.galleryInnerId);
+        const scrollLeftBtn = document.getElementById(galleryConfig.scrollLeftBtnId);
+        const scrollRightBtn = document.getElementById(galleryConfig.scrollRightBtnId);
+
+        if (galleryContainer && galleryInner && scrollLeftBtn && scrollRightBtn) {
+          // Calculate the scroll amount based on the width of the first video + gap
+          const scrollAmount = (galleryInner.firstElementChild?.offsetWidth || 300) + 15; // 15 is the gap
+
+          scrollLeftBtn.addEventListener('click', () => {
+            // Scroll the CONTAINER element
+            galleryContainer.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+          });
+
+          scrollRightBtn.addEventListener('click', () => {
+            // Scroll the CONTAINER element
+            galleryContainer.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+          });
+
+          /* --- REMOVE OR COMMENT OUT HOVER LOGIC ---
+          // Optional: Add hover-to-play functionality for gallery videos
+          // Target videos within galleryInner
+          const galleryVideos = galleryInner.querySelectorAll('.gallery-video');
+          galleryVideos.forEach(video => {
+              video.addEventListener('mouseenter', () => {
+                  video.play().catch(e => console.log("Autoplay prevented:", e));
+              });
+              video.addEventListener('mouseleave', () => {
+                  video.pause();
+                  // video.currentTime = 0; // Optional: reset video on mouse leave
+              });
+          });
+          */ // --- END OF REMOVED HOVER LOGIC ---
+
+        } else {
+          console.error(`Gallery elements not found for navigation setup in section ${galleryConfig.sectionId}.`);
+          // Log which elements might be missing
+          if (!galleryContainer) console.error('Missing element: .video-gallery-container in section ' + galleryConfig.sectionId);
+          if (!galleryInner) console.error(`Missing element with ID ${galleryConfig.galleryInnerId}`);
+          if (!scrollLeftBtn) console.error(`Missing element with ID ${galleryConfig.scrollLeftBtnId}`);
+          if (!scrollRightBtn) console.error(`Missing element with ID ${galleryConfig.scrollRightBtnId}`);
+        }
+      });
+    });
+  </script>
+
+  <!-- JavaScript for Real-to-Sim Video Synchronization -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const videosToSync = [
+        document.querySelector('.r2s-video-input'),
+        document.querySelector('.r2s-video-smpl'),
+        document.querySelector('.r2s-video-g1'),
+        document.querySelector('.r2s-video-ego-rgb'),
+        document.querySelector('.r2s-video-ego-depth'),
+        document.querySelector('.r2s-video-sim')
+      ].filter(Boolean); // Filter out nulls if any class name is wrong or video missing
+
+      function synchronizeAndPlayR2SVideos() {
+        if (videosToSync.length === 0) {
+          console.warn('No videos found for Real-to-Sim synchronization.');
+          return;
+        }
+
+        const readyPromises = videosToSync.map(video => {
+          return new Promise((resolve, reject) => {
+            // If video is already ready (e.g., cached), resolve immediately
+            if (video.readyState >= 4) { // HAVE_ENOUGH_DATA (canplaythrough)
+              resolve();
+            } else {
+              video.addEventListener('canplaythrough', resolve, { once: true });
+              video.addEventListener('error', reject, { once: true }); // Handle potential loading errors
+            }
+          });
+        });
+
+        Promise.all(readyPromises)
+          .then(() => {
+            console.log('All Real-to-Sim videos are ready to play. Starting playback.');
+            videosToSync.forEach(video => {
+              video.currentTime = 0; // Ensure starting from the beginning
+              video.play().catch(error => {
+                console.warn(`Autoplay was prevented for video ${video.src}. User interaction might be needed.`, error);
+                // Ensure controls are visible if autoplay fails for any video
+                video.controls = true;
+              });
+            });
+          })
+          .catch(error => {
+            console.error('Error waiting for Real-to-Sim videos to be ready:', error);
+            // Optionally, provide a fallback or user message here
+            videosToSync.forEach(video => video.controls = true); // Show controls on all if any failed to load
+          });
+      }
+
+      synchronizeAndPlayR2SVideos();
+
+      // The `loop` attribute on the HTML video tags will handle continuous looping.
+      // The videos will naturally re-synchronize at their LCM due to the loop attribute
+      // if they have different durations and all successfully start.
+    });
+  </script>
+
+  <!-- JavaScript to prevent default click on specific image links -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const imageLinkIds = ['figure-1-img', 'figure-2-img', 'figure-3-img'];
+      imageLinkIds.forEach(id => {
+        const linkElement = document.getElementById(id);
+        if (linkElement) {
+          linkElement.addEventListener('click', function(event) {
+            event.preventDefault();
+          });
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
