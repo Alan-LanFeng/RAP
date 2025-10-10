@@ -132,6 +132,35 @@ body {
   margin: 40px 0;
 }
 
+.affiliation-row {
+  display: flex;
+  align-items: center;       /* 垂直居中对齐 */
+  justify-content: space-between; /* 左边单位，右边logo */
+  margin-top: 10px;
+}
+
+.affiliation {
+  font-size: 0.95rem;
+}
+
+.affiliation-row .logos a {
+  display: inline-block;
+}
+
+.affiliation-row .logos img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  margin-left: 10px;
+  border: none; /* 不要黑框 */
+  transition: transform 0.2s ease; /* 小动画 */
+}
+
+.affiliation-row .logos img:hover {
+  transform: scale(1.1); /* 鼠标悬停时稍微放大 */
+}
+
+
 img {
   width: 100%;
   /* Update border: set width (e.g., 4px), style (solid), color (#000) */
